@@ -96,11 +96,7 @@ def _set_version_info(version_from_interpreter: str):
     year = int(version_parts[0])
     month = int(version_parts[1])
     minor = int(version_parts[2])
-    if len(version_parts) > 3:
-        releaselevel = version_parts[3]
-    else:
-        releaselevel = ""
-
+    releaselevel = version_parts[3] if len(version_parts) > 3 else ""
     VersionInfo = namedtuple("version_info", ("year", "month", "minor", "releaselevel"))
     version_info = VersionInfo(year, month, minor, releaselevel)
 
@@ -279,8 +275,7 @@ class Element:
         if from_content:
             el = el.content
 
-        _el = el.querySelector(query)
-        if _el:
+        if _el := el.querySelector(query):
             return Element(_el.id, _el)
         else:
             js.console.warn(f"WARNING: can't find element matching query {query}")
@@ -438,7 +433,7 @@ class PyListTemplate:
 
     def connect(self):
         self.md = main_div = js.document.createElement("div")
-        main_div.id = self._id + "-list-tasks-container"
+        main_div.id = f"{self._id}-list-tasks-container"
 
         if self.theme:
             self.theme.theme_it(main_div)
@@ -446,10 +441,11 @@ class PyListTemplate:
         self.parent.appendChild(main_div)
 
     def add(self, *args, **kws):
-        if not isinstance(args[0], self.item_class):
-            child = self.item_class(*args, **kws)
-        else:
-            child = args[0]
+        child = (
+            args[0]
+            if isinstance(args[0], self.item_class)
+            else self.item_class(*args, **kws)
+        )
         child.register_parent(self)
         return self._add(child)
 
@@ -645,7 +641,7 @@ def _install_deprecated_globals_2022_12_1(ns):
     """
 
     def deprecate(name, obj, instead):
-        message = f"Direct usage of <code>{name}</code> is deprecated. " + instead
+        message = f"Direct usage of <code>{name}</code> is deprecated. {instead}"
         ns[name] = DeprecatedGlobal(name, obj, message)
 
     # function/classes defined in pyscript.py ===> pyscript.XXX
@@ -753,8 +749,7 @@ class _PyscriptWebLoop(WebLoop):
         t = self.time()
         for [run_handle, delay] in self._deferred_handles:
             delay = delay - t
-            if delay < 0:
-                delay = 0
+            delay = max(delay, 0)
             setTimeout(create_once_callable(run_handle), delay * 1000)
         self._ready = True
         self._deferred_handles = []

@@ -78,10 +78,9 @@ def pytest_configure(config):
             - cd tests/integration; pytest
         """
         pytest.fail(msg)
-    else:
-        if config.option.dev:
-            config.option.headed = True
-            config.option.no_fake_server = True
+    elif config.option.dev:
+        config.option.headed = True
+        config.option.no_fake_server = True
 
 
 @pytest.fixture(scope="session")
@@ -141,6 +140,7 @@ class HTTPServer(SuperHTTPServer):
 
 @pytest.fixture(scope="session")
 def http_server(logger):
+
     class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         def end_headers(self):
             self.send_my_headers()
@@ -154,16 +154,13 @@ def http_server(logger):
             logger.log("http_server", fmt % args, color="blue")
 
     host, port = "localhost", 8080
-    base_url = f"http://{host}:{port}"
-
     # serve_Run forever under thread
     server = HTTPServer((host, port), MyHTTPRequestHandler)
 
     thread = threading.Thread(None, server.run)
     thread.start()
 
-    yield base_url  # Transition to test here
-
+    yield f"http://{host}:{port}"
     # End thread
     server.shutdown()
     thread.join()
