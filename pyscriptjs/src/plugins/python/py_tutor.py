@@ -139,10 +139,11 @@ class PyTutor:
                 attached to the DOM
         """
         js.console.info(f"Module paths to parse: {module_paths}")
-        if not module_paths:
-            return ""
-
-        return "\n\n".join([cls.create_module_section(m) for m in module_paths])
+        return (
+            "\n\n".join([cls.create_module_section(m) for m in module_paths])
+            if module_paths
+            else ""
+        )
 
     @staticmethod
     def create_module_section(module_path):

@@ -46,7 +46,7 @@ class TestExamples(PyScriptTest):
         # espresso time!"
         for _ in range(5):
             content = self.page.inner_html("#outputDiv2")
-            if re.match(pattern, content) and int(content[-1]) in (0, 4, 8):
+            if re.match(pattern, content) and int(content[-1]) in {0, 4, 8}:
                 assert self.page.inner_html("#outputDiv3") == "It's espresso time!"
                 break
             else:
@@ -90,11 +90,11 @@ class TestExamples(PyScriptTest):
         # check that character moves in negative-y direction over time
         ycoord_pattern = r"translate\(-?\d*\.\d*,\s(?P<ycoord>-?[\d.]+)\)"
         starting_y_coord = float(
-            re.match(ycoord_pattern, char.get_attribute("transform")).group("ycoord")
+            re.match(ycoord_pattern, char.get_attribute("transform"))["ycoord"]
         )
         time.sleep(2)
         later_y_coord = float(
-            re.match(ycoord_pattern, char.get_attribute("transform")).group("ycoord")
+            re.match(ycoord_pattern, char.get_attribute("transform"))["ycoord"]
         )
         assert later_y_coord < starting_y_coord
         self.check_tutor_generated_code(modules_to_check=["antigravity.py"])

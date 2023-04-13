@@ -319,7 +319,7 @@ class PyScriptTest:
         n = loc.count()
         if n > 0:
             text = "\n".join(loc.all_inner_texts())
-            raise AssertionError(f"Found {n} alert banners:\n" + text)
+            raise AssertionError(f"Found {n} alert banners:\n{text}")
 
     def assert_banner_message(self, expected_message):
         """
@@ -449,8 +449,7 @@ class JsErrors(Exception):
         n = len(errors)
         assert n != 0
         lines = [f"JS errors found: {n}"]
-        for err in errors:
-            lines.append(self.format_playwright_error(err))
+        lines.extend(self.format_playwright_error(err) for err in errors)
         msg = "\n".join(lines)
         super().__init__(msg)
         self.errors = errors
@@ -472,15 +471,11 @@ class JsErrorsDidNotRaise(Exception):
 
     def __init__(self, expected_messages, errors):
         lines = ["The following JS errors were expected but could not be found:"]
-        for msg in expected_messages:
-            lines.append("    - " + msg)
+        lines.extend(f"    - {msg}" for msg in expected_messages)
         if errors:
-            lines.append("---")
-            lines.append("The following JS errors were raised but not expected:")
-            for err in errors:
-                lines.append(JsErrors.format_playwright_error(err))
-        msg = "\n".join(lines)
-        super().__init__(msg)
+            lines.extend(("---", "The following JS errors were raised but not expected:"))
+            lines.extend(JsErrors.format_playwright_error(err) for err in errors)
+        super().__init__("\n".join(lines))
         self.expected_messages = expected_messages
         self.errors = errors
 
@@ -750,11 +745,11 @@ class SmartRouter:
         route.fulfill(status=resp.status, headers=resp.headers, body=resp.body)
 
     def clear_cache(self, url):
-        key = "pyscript/" + url
+        key = f"pyscript/{url}"
         self.cache.set(key, None)
 
     def save_resp_to_cache(self, url, resp):
-        key = "pyscript/" + url
+        key = f"pyscript/{url}"
         data = resp.asdict()
         # cache.set encodes it as JSON, and "bytes" are not supported: let's
         # encode them as latin-1
@@ -762,7 +757,7 @@ class SmartRouter:
         self.cache.set(key, data)
 
     def fetch_from_cache(self, url):
-        key = "pyscript/" + url
+        key = f"pyscript/{url}"
         data = self.cache.get(key, None)
         if data is None:
             return None
@@ -781,9 +776,8 @@ class SmartRouter:
             time.sleep(0.5)
             api_response = self.page.request.fetch(request)
 
-        cached_response = self.CachedResponse(
+        return self.CachedResponse(
             status=api_response.status,
             headers=api_response.headers,
             body=api_response.body(),
         )
-        return cached_response
